@@ -1,2 +1,3 @@
-# atistats-1bb60884
-Repository for AI-Academy 3 ATI Stats
+# AI-Academy 3 ATI Stats
+
+This is about how Public Bodies Process Access to Information requests
