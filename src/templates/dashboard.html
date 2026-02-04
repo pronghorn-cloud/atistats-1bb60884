@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="px-4 sm:px-0">
+    <!-- Stats Overview Cards -->
+    <section aria-labelledby="stats-heading">
+        <h2 id="stats-heading" class="sr-only">Statistics Overview</h2>
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- Total Requests Card -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-md bg-primary-500 p-3">
+                                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Requests</dt>
+                                <dd class="text-2xl font-bold text-gray-900">{{ stats.total_requests | default(0) | int }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-5 py-3">
+                    <a href="/requests" class="text-sm font-medium text-primary-600 hover:text-primary-800">
+                        View all requests →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Public Bodies Card -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-md bg-green-500 p-3">
+                                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Public Bodies</dt>
+                                <dd class="text-2xl font-bold text-gray-900">{{ stats.total_public_bodies | default(0) | int }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-5 py-3">
+                    <a href="/public-bodies" class="text-sm font-medium text-primary-600 hover:text-primary-800">
+                        View all bodies →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Avg Response Time Card -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-md bg-yellow-500 p-3">
+                                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Avg Response Time</dt>
+                                <dd class="text-2xl font-bold text-gray-900">{{ "%.1f" | format(stats.avg_response_days | default(0)) }} days</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-5 py-3">
+                    <span class="text-sm text-gray-500">Statutory limit: 30 days</span>
+                </div>
+            </div>
+
+            <!-- Overdue Requests Card -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-md bg-red-500 p-3">
+                                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Overdue Requests</dt>
+                                <dd class="text-2xl font-bold text-gray-900">{{ stats.overdue_count | default(0) | int }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-5 py-3">
+                    <a href="/requests?overdue=true" class="text-sm font-medium text-red-600 hover:text-red-800">
+                        View overdue →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2" aria-labelledby="charts-heading">
+        <h2 id="charts-heading" class="sr-only">Statistics Charts</h2>
+        
+        <!-- Request Status Distribution -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Request Status Distribution</h3>
+            <div class="relative" style="height: 300px;">
+                <canvas id="statusChart" aria-label="Pie chart showing distribution of request statuses" role="img"></canvas>
+            </div>
+        </div>
+
+        <!-- Request Outcomes -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Request Outcomes</h3>
+            <div class="relative" style="height: 300px;">
+                <canvas id="outcomeChart" aria-label="Bar chart showing request outcomes" role="img"></canvas>
+            </div>
+        </div>
+
+        <!-- Monthly Trends -->
+        <div class="bg-white shadow rounded-lg p-6 lg:col-span-2">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Request Trends</h3>
+            <div class="relative" style="height: 300px;">
+                <canvas id="trendsChart" aria-label="Line chart showing monthly request trends" role="img"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Activity & Top Public Bodies -->
+    <section class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2" aria-labelledby="activity-heading">
+        <h2 id="activity-heading" class="sr-only">Recent Activity and Top Public Bodies</h2>
+        
+        <!-- Recent Requests -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Recent Requests</h3>
+            </div>
+            <ul class="divide-y divide-gray-200" role="list">
+                {% for request in recent_requests %}
+                <li class="px-6 py-4 hover:bg-gray-50">
+                    <a href="/requests/{{ request.id }}" class="block">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-primary-600 truncate">{{ request.request_number }}</p>
+                                <p class="text-sm text-gray-500 truncate">{{ request.public_body_name | default('Unknown') }}</p>
+                            </div>
+                            <div class="ml-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if request.status == 'completed' %}bg-green-100 text-green-800
+                                    {% elif request.status == 'in_progress' %}bg-blue-100 text-blue-800
+                                    {% elif request.status == 'overdue' or request.is_deemed_refusal %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ request.status | replace('_', ' ') | title }}
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                </li>
+                {% else %}
+                <li class="px-6 py-4 text-sm text-gray-500">No recent requests found.</li>
+                {% endfor %}
+            </ul>
+            <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
+                <a href="/requests" class="text-sm font-medium text-primary-600 hover:text-primary-800">View all requests →</a>
+            </div>
+        </div>
+
+        <!-- Top Public Bodies -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Top Public Bodies by Volume</h3>
+            </div>
+            <ul class="divide-y divide-gray-200" role="list">
+                {% for body in top_public_bodies %}
+                <li class="px-6 py-4 hover:bg-gray-50">
+                    <a href="/public-bodies/{{ body.id }}" class="block">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ body.name }}</p>
+                                <p class="text-sm text-gray-500">{{ body.abbreviation | default('') }}</p>
+                            </div>
+                            <div class="ml-4 text-right">
+                                <p class="text-sm font-medium text-gray-900">{{ body.request_count }}</p>
+                                <p class="text-xs text-gray-500">requests</p>
+                            </div>
+                        </div>
+                    </a>
+                </li>
+                {% else %}
+                <li class="px-6 py-4 text-sm text-gray-500">No public bodies found.</li>
+                {% endfor %}
+            </ul>
+            <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
+                <a href="/public-bodies" class="text-sm font-medium text-primary-600 hover:text-primary-800">View all public bodies →</a>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Status Chart (Pie/Doughnut)
+    const statusCtx = document.getElementById('statusChart');
+    if (statusCtx) {
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ status_labels | tojson | default('[]') }},
+                datasets: [{
+                    data: {{ status_data | tojson | default('[]') }},
+                    backgroundColor: [
+                        '#3b82f6', // blue - received
+                        '#10b981', // green - completed
+                        '#f59e0b', // yellow - in_progress
+                        '#ef4444', // red - overdue
+                        '#6b7280', // gray - other
+                        '#8b5cf6', // purple - extended
+                        '#ec4899'  // pink - transferred
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    }
+                }
+            }
+        });
+    }
+
+    // Outcome Chart (Bar)
+    const outcomeCtx = document.getElementById('outcomeChart');
+    if (outcomeCtx) {
+        new Chart(outcomeCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ outcome_labels | tojson | default('[]') }},
+                datasets: [{
+                    label: 'Number of Requests',
+                    data: {{ outcome_data | tojson | default('[]') }},
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Trends Chart (Line)
+    const trendsCtx = document.getElementById('trendsChart');
+    if (trendsCtx) {
+        new Chart(trendsCtx, {
+            type: 'line',
+            data: {
+                labels: {{ month_labels | tojson | default('[]') }},
+                datasets: [{
+                    label: 'Requests Received',
+                    data: {{ month_received_data | tojson | default('[]') }},
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }, {
+                    label: 'Requests Completed',
+                    data: {{ month_completed_data | tojson | default('[]') }},
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

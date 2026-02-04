@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Request {{ req.request_number }}{% endblock %}
+{% block page_title %}Request Details{% endblock %}
+
+{% block header %}
+<header class="bg-white shadow">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <nav class="flex mb-2" aria-label="Breadcrumb">
+                    <ol class="flex items-center space-x-2 text-sm text-gray-500">
+                        <li><a href="/" class="hover:text-primary-600">Dashboard</a></li>
+                        <li><span aria-hidden="true">/</span></li>
+                        <li><a href="/requests" class="hover:text-primary-600">Requests</a></li>
+                        <li><span aria-hidden="true">/</span></li>
+                        <li class="text-gray-900" aria-current="page">{{ req.request_number }}</li>
+                    </ol>
+                </nav>
+                <h1 class="text-3xl font-bold tracking-tight text-gray-900">{{ req.request_number }}</h1>
+                {% if req.public_body %}
+                <p class="mt-1 text-lg text-gray-500">
+                    <a href="/public-bodies/{{ req.public_body.id }}" class="hover:text-primary-600">{{ req.public_body.name }}</a>
+                </p>
+                {% endif %}
+            </div>
+            <div class="mt-4 sm:mt-0 flex flex-wrap gap-2">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                    {% if req.status.value == 'completed' %}bg-green-100 text-green-800
+                    {% elif req.status.value == 'in_progress' %}bg-blue-100 text-blue-800
+                    {% elif req.status.value == 'extended' %}bg-purple-100 text-purple-800
+                    {% elif req.is_deemed_refusal %}bg-red-100 text-red-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ req.status.value | replace('_', ' ') | title }}
+                </span>
+                {% if req.is_deemed_refusal %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                    Deemed Refusal
+                </span>
+                {% endif %}
+                {% if is_overdue %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                    Overdue
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="px-4 sm:px-0">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <!-- Main Information -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Request Details Card -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Request Information</h2>
+                </div>
+                <div class="px-6 py-4">
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Request Number</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ req.request_number }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Request Type</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ req.request_type.value | replace('_', ' ') | title if req.request_type else '-' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Public Body</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {% if req.public_body %}
+                                <a href="/public-bodies/{{ req.public_body.id }}" class="text-primary-600 hover:text-primary-800">{{ req.public_body.name }}</a>
+                                {% else %}-{% endif %}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Status</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ req.status.value | replace('_', ' ') | title }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Outcome</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ req.outcome.value | replace('_', ' ') | title if req.outcome else 'Pending' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Deemed Refusal</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ 'Yes' if req.is_deemed_refusal else 'No' }}</dd>
+                        </div>
+                    </dl>
+                    
+                    {% if req.summary %}
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <dt class="text-sm font-medium text-gray-500">Summary</dt>
+                        <dd class="mt-2 text-sm text-gray-900">{{ req.summary }}</dd>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Processing Details Card -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Processing Details</h2>
+                </div>
+                <div class="px-6 py-4">
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Pages Processed</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ req.pages_processed | default('-') }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Pages Disclosed</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ req.pages_disclosed | default('-') }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Fees Charged</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {% if req.fees_charged is not none %}
+                                ${{ "%.2f" | format(req.fees_charged) }}
+                                {% else %}-{% endif %}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Extension Days</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ req.extension_days | default(0) }} days</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Timeline Card -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Timeline</h2>
+                </div>
+                <div class="px-6 py-4">
+                    <dl class="space-y-4">
+                        <div class="flex justify-between">
+                            <dt class="text-sm font-medium text-gray-500">Submitted</dt>
+                            <dd class="text-sm text-gray-900">{{ req.submission_date.strftime('%b %d, %Y') if req.submission_date else '-' }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-sm font-medium text-gray-500">Due Date</dt>
+                            <dd class="text-sm {% if is_overdue %}text-red-600 font-medium{% else %}text-gray-900{% endif %}">{{ req.due_date.strftime('%b %d, %Y') if req.due_date else '-' }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-sm font-medium text-gray-500">Completed</dt>
+                            <dd class="text-sm text-gray-900">{{ req.completion_date.strftime('%b %d, %Y') if req.completion_date else '-' }}</dd>
+                        </div>
+                    </dl>
+                    
+                    {% if response_time %}
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="flex justify-between">
+                            <span class="text-sm font-medium text-gray-500">Response Time</span>
+                            <span class="text-sm font-medium {% if response_time > 30 %}text-red-600{% else %}text-green-600{% endif %}">{{ response_time }} days</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Visual Timeline -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Progress</h2>
+                </div>
+                <div class="px-6 py-4">
+                    <ol class="relative border-l border-gray-200 ml-3">
+                        <li class="mb-6 ml-6">
+                            <span class="absolute flex items-center justify-center w-6 h-6 bg-green-100 rounded-full -left-3 ring-4 ring-white">
+                                <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </span>
+                            <h3 class="text-sm font-medium text-gray-900">Received</h3>
+                            <time class="text-xs text-gray-500">{{ req.submission_date.strftime('%b %d, %Y') if req.submission_date else '' }}</time>
+                        </li>
+                        
+                        {% if req.status.value in ['in_progress', 'pending_clarification', 'extended', 'completed', 'abandoned', 'transferred'] %}
+                        <li class="mb-6 ml-6">
+                            <span class="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -left-3 ring-4 ring-white">
+                                <svg class="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                </svg>
+                            </span>
+                            <h3 class="text-sm font-medium text-gray-900">In Progress</h3>
+                        </li>
+                        {% endif %}
+                        
+                        {% if req.status.value == 'completed' %}
+                        <li class="ml-6">
+                            <span class="absolute flex items-center justify-center w-6 h-6 bg-green-100 rounded-full -left-3 ring-4 ring-white">
+                                <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </span>
+                            <h3 class="text-sm font-medium text-gray-900">Completed</h3>
+                            <time class="text-xs text-gray-500">{{ req.completion_date.strftime('%b %d, %Y') if req.completion_date else '' }}</time>
+                        </li>
+                        {% elif req.status.value not in ['completed', 'abandoned', 'transferred'] %}
+                        <li class="ml-6">
+                            <span class="absolute flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full -left-3 ring-4 ring-white">
+                                <svg class="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <circle cx="10" cy="10" r="3"></circle>
+                                </svg>
+                            </span>
+                            <h3 class="text-sm font-medium text-gray-400">Pending Completion</h3>
+                            <time class="text-xs text-gray-400">Due: {{ req.due_date.strftime('%b %d, %Y') if req.due_date else 'TBD' }}</time>
+                        </li>
+                        {% endif %}
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Record Info -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Record Info</h2>
+                </div>
+                <div class="px-6 py-4">
+                    <dl class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Created</dt>
+                            <dd class="text-gray-900">{{ req.created_at.strftime('%b %d, %Y') if req.created_at else '-' }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-500">Updated</dt>
+                            <dd class="text-gray-900">{{ req.updated_at.strftime('%b %d, %Y') if req.updated_at else '-' }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

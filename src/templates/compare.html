@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+
+{% block title %}Compare{% endblock %}
+{% block page_title %}Comparison Tools{% endblock %}
+
+{% block content %}
+<div class="px-4 sm:px-0">
+    <!-- Comparison Type Tabs -->
+    <div class="mb-6">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8" aria-label="Comparison type">
+                <a href="/compare?type=bodies" 
+                   class="{% if comparison_type == 'bodies' %}border-primary-500 text-primary-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                   {% if comparison_type == 'bodies' %}aria-current="page"{% endif %}>
+                    Compare Public Bodies
+                </a>
+                <a href="/compare?type=years" 
+                   class="{% if comparison_type == 'years' %}border-primary-500 text-primary-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm"
+                   {% if comparison_type == 'years' %}aria-current="page"{% endif %}>
+                    Year-over-Year
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    {% if comparison_type == 'bodies' %}
+    <!-- Body-to-Body Comparison -->
+    <section aria-labelledby="body-comparison-heading">
+        <h2 id="body-comparison-heading" class="sr-only">Public Body Comparison</h2>
+        
+        <!-- Selection Form -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Select Public Bodies to Compare</h3>
+            <form method="get" action="/compare" class="flex flex-col sm:flex-row gap-4">
+                <input type="hidden" name="type" value="bodies">
+                <div class="flex-1">
+                    <label for="body1" class="block text-sm font-medium text-gray-700 mb-1">First Public Body</label>
+                    <select name="body1" id="body1" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border" required>
+                        <option value="">Select a public body...</option>
+                        {% for pb in public_bodies %}
+                        <option value="{{ pb.id }}" {% if body1_id == pb.id | string %}selected{% endif %}>{{ pb.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label for="body2" class="block text-sm font-medium text-gray-700 mb-1">Second Public Body</label>
+                    <select name="body2" id="body2" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border" required>
+                        <option value="">Select a public body...</option>
+                        {% for pb in public_bodies %}
+                        <option value="{{ pb.id }}" {% if body2_id == pb.id | string %}selected{% endif %}>{{ pb.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Compare
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {% if body1 and body2 %}
+        <!-- Comparison Results -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Stats Comparison Table -->
+            <div class="lg:col-span-2 bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Statistics Comparison</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ body1.name }}</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ body2.name }}</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Difference</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Requests</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ stats1.total_requests }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ stats2.total_requests }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm {% if stats1.total_requests > stats2.total_requests %}text-green-600{% elif stats1.total_requests < stats2.total_requests %}text-red-600{% else %}text-gray-500{% endif %}">
+                                    {{ stats1.total_requests - stats2.total_requests | abs }}
+                                    {% if stats1.total_requests > stats2.total_requests %}(+{{ ((stats1.total_requests - stats2.total_requests) / stats2.total_requests * 100) | round | int if stats2.total_requests else 0 }}%){% elif stats1.total_requests < stats2.total_requests %}(-{{ ((stats2.total_requests - stats1.total_requests) / stats1.total_requests * 100) | round | int if stats1.total_requests else 0 }}%){% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Completed Requests</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ stats1.completed_count }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ stats2.completed_count }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ (stats1.completed_count - stats2.completed_count) | abs }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Avg Response Time (days)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.1f" | format(stats1.avg_response_days) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.1f" | format(stats2.avg_response_days) }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm {% if stats1.avg_response_days < stats2.avg_response_days %}text-green-600{% elif stats1.avg_response_days > stats2.avg_response_days %}text-red-600{% else %}text-gray-500{% endif %}">
+                                    {{ "%.1f" | format((stats1.avg_response_days - stats2.avg_response_days) | abs) }} days
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">On-Time Compliance Rate</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.0f" | format(stats1.compliance_rate) }}%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.0f" | format(stats2.compliance_rate) }}%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm {% if stats1.compliance_rate > stats2.compliance_rate %}text-green-600{% elif stats1.compliance_rate < stats2.compliance_rate %}text-red-600{% else %}text-gray-500{% endif %}">
+                                    {{ "%.0f" | format((stats1.compliance_rate - stats2.compliance_rate) | abs) }}%
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Full Disclosure Rate</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.0f" | format(stats1.full_disclosure_rate) }}%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.0f" | format(stats2.full_disclosure_rate) }}%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm {% if stats1.full_disclosure_rate > stats2.full_disclosure_rate %}text-green-600{% elif stats1.full_disclosure_rate < stats2.full_disclosure_rate %}text-red-600{% else %}text-gray-500{% endif %}">
+                                    {{ "%.0f" | format((stats1.full_disclosure_rate - stats2.full_disclosure_rate) | abs) }}%
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Outcome Comparison Chart -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Outcome Distribution</h3>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="outcomeComparisonChart" aria-label="Comparison of request outcomes between public bodies" role="img"></canvas>
+                </div>
+            </div>
+
+            <!-- Monthly Volume Comparison -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Request Volume</h3>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="volumeComparisonChart" aria-label="Comparison of monthly request volumes" role="img"></canvas>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-white shadow rounded-lg p-8 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Select two public bodies to compare</h3>
+            <p class="mt-1 text-sm text-gray-500">Use the dropdown menus above to select which organizations you'd like to compare.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    {% else %}
+    <!-- Year-over-Year Comparison -->
+    <section aria-labelledby="year-comparison-heading">
+        <h2 id="year-comparison-heading" class="sr-only">Year-over-Year Comparison</h2>
+        
+        <!-- Selection Form -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Select Years to Compare</h3>
+            <form method="get" action="/compare" class="flex flex-col sm:flex-row gap-4">
+                <input type="hidden" name="type" value="years">
+                <div class="flex-1">
+                    <label for="year1" class="block text-sm font-medium text-gray-700 mb-1">First Year</label>
+                    <select name="year1" id="year1" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border" required>
+                        {% for year in available_years %}
+                        <option value="{{ year }}" {% if year1 == year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label for="year2" class="block text-sm font-medium text-gray-700 mb-1">Second Year</label>
+                    <select name="year2" id="year2" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border" required>
+                        {% for year in available_years %}
+                        <option value="{{ year }}" {% if year2 == year %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label for="body_filter" class="block text-sm font-medium text-gray-700 mb-1">Public Body (Optional)</label>
+                    <select name="body_filter" id="body_filter" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border">
+                        <option value="">All Bodies</option>
+                        {% for pb in public_bodies %}
+                        <option value="{{ pb.id }}" {% if body_filter == pb.id | string %}selected{% endif %}>{{ pb.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Compare
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {% if year1 and year2 %}
+        <!-- Year Comparison Results -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Stats Comparison Table -->
+            <div class="lg:col-span-2 bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Year-over-Year Statistics</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ year1 }}</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ year2 }}</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Change</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Requests</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ year1_stats.total_requests }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ year2_stats.total_requests }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm {% if year2_stats.total_requests > year1_stats.total_requests %}text-green-600{% elif year2_stats.total_requests < year1_stats.total_requests %}text-red-600{% else %}text-gray-500{% endif %}">
+                                    {% set change = year2_stats.total_requests - year1_stats.total_requests %}
+                                    {% if change > 0 %}+{% endif %}{{ change }}
+                                    {% if year1_stats.total_requests > 0 %}
+                                    ({% if change >= 0 %}+{% endif %}{{ ((change / year1_stats.total_requests) * 100) | round | int }}%)
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Completed</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ year1_stats.completed_count }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ year2_stats.completed_count }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% set change = year2_stats.completed_count - year1_stats.completed_count %}
+                                    {% if change > 0 %}+{% endif %}{{ change }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Avg Response Time</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.1f" | format(year1_stats.avg_response_days) }} days</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.1f" | format(year2_stats.avg_response_days) }} days</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm {% if year2_stats.avg_response_days < year1_stats.avg_response_days %}text-green-600{% elif year2_stats.avg_response_days > year1_stats.avg_response_days %}text-red-600{% else %}text-gray-500{% endif %}">
+                                    {% set change = year2_stats.avg_response_days - year1_stats.avg_response_days %}
+                                    {% if change > 0 %}+{% endif %}{{ "%.1f" | format(change) }} days
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">On-Time Rate</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.0f" | format(year1_stats.compliance_rate) }}%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ "%.0f" | format(year2_stats.compliance_rate) }}%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm {% if year2_stats.compliance_rate > year1_stats.compliance_rate %}text-green-600{% elif year2_stats.compliance_rate < year1_stats.compliance_rate %}text-red-600{% else %}text-gray-500{% endif %}">
+                                    {% set change = year2_stats.compliance_rate - year1_stats.compliance_rate %}
+                                    {% if change > 0 %}+{% endif %}{{ "%.0f" | format(change) }}%
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Monthly Comparison Chart -->
+            <div class="lg:col-span-2 bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Request Volume Comparison</h3>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="yearComparisonChart" aria-label="Monthly comparison between years" role="img"></canvas>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-white shadow rounded-lg p-8 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">Select years to compare</h3>
+            <p class="mt-1 text-sm text-gray-500">Use the dropdown menus above to select which years you'd like to compare.</p>
+        </div>
+        {% endif %}
+    </section>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if comparison_type == 'bodies' and body1 and body2 %}
+    // Outcome Comparison Chart
+    const outcomeCtx = document.getElementById('outcomeComparisonChart');
+    if (outcomeCtx) {
+        new Chart(outcomeCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ outcome_labels | tojson | default('[]') }},
+                datasets: [{
+                    label: '{{ body1.name }}',
+                    data: {{ outcome_data1 | tojson | default('[]') }},
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 4
+                }, {
+                    label: '{{ body2.name }}',
+                    data: {{ outcome_data2 | tojson | default('[]') }},
+                    backgroundColor: '#10b981',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // Volume Comparison Chart
+    const volumeCtx = document.getElementById('volumeComparisonChart');
+    if (volumeCtx) {
+        new Chart(volumeCtx, {
+            type: 'line',
+            data: {
+                labels: {{ month_labels | tojson | default('[]') }},
+                datasets: [{
+                    label: '{{ body1.name }}',
+                    data: {{ month_data1 | tojson | default('[]') }},
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: false,
+                    tension: 0.3
+                }, {
+                    label: '{{ body2.name }}',
+                    data: {{ month_data2 | tojson | default('[]') }},
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: false,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+    {% endif %}
+
+    {% if comparison_type == 'years' and year1 and year2 %}
+    // Year Comparison Chart
+    const yearCtx = document.getElementById('yearComparisonChart');
+    if (yearCtx) {
+        new Chart(yearCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: '{{ year1 }}',
+                    data: {{ year1_monthly | tojson | default('[]') }},
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 4
+                }, {
+                    label: '{{ year2 }}',
+                    data: {{ year2_monthly | tojson | default('[]') }},
+                    backgroundColor: '#10b981',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+    {% endif %}
+});
+</script>
+{% endblock %}

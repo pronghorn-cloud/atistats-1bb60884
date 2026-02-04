@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ATI Stats{% endblock %} - Access to Information Statistics</title>
+    
+    <!-- TailwindCSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- HTMX for dynamic interactions -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Alpine.js for lightweight interactivity -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        /* Custom focus styles for accessibility */
+        :focus-visible {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+        
+        /* Skip link for accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #1e40af;
+            color: white;
+            padding: 8px 16px;
+            z-index: 100;
+            transition: top 0.3s;
+        }
+        .skip-link:focus {
+            top: 0;
+        }
+        
+        /* Loading indicator */
+        .htmx-request .htmx-indicator {
+            display: inline-block;
+        }
+        .htmx-indicator {
+            display: none;
+        }
+    </style>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full bg-gray-50" x-data="{ sidebarOpen: false }">
+    <!-- Skip to main content link for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <div class="min-h-full">
+        <!-- Navigation -->
+        <nav class="bg-primary-800" aria-label="Main navigation">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <a href="/" class="text-white font-bold text-xl" aria-label="ATI Stats Home">
+                                📊 ATI Stats
+                            </a>
+                        </div>
+                        <div class="hidden md:block">
+                            <div class="ml-10 flex items-baseline space-x-4">
+                                <a href="/" 
+                                   class="{% if request.url.path == '/' %}bg-primary-900 text-white{% else %}text-gray-300 hover:bg-primary-700 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium"
+                                   {% if request.url.path == '/' %}aria-current="page"{% endif %}>
+                                    Dashboard
+                                </a>
+                                <a href="/public-bodies" 
+                                   class="{% if '/public-bodies' in request.url.path %}bg-primary-900 text-white{% else %}text-gray-300 hover:bg-primary-700 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium"
+                                   {% if '/public-bodies' in request.url.path %}aria-current="page"{% endif %}>
+                                    Public Bodies
+                                </a>
+                                <a href="/requests" 
+                                   class="{% if '/requests' in request.url.path %}bg-primary-900 text-white{% else %}text-gray-300 hover:bg-primary-700 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium"
+                                   {% if '/requests' in request.url.path %}aria-current="page"{% endif %}>
+                                    ATI Requests
+                                </a>
+                                <a href="/compare" 
+                                   class="{% if '/compare' in request.url.path %}bg-primary-900 text-white{% else %}text-gray-300 hover:bg-primary-700 hover:text-white{% endif %} rounded-md px-3 py-2 text-sm font-medium"
+                                   {% if '/compare' in request.url.path %}aria-current="page"{% endif %}>
+                                    Compare
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mobile menu button -->
+                    <div class="-mr-2 flex md:hidden">
+                        <button type="button" 
+                                @click="sidebarOpen = !sidebarOpen"
+                                class="inline-flex items-center justify-center rounded-md bg-primary-700 p-2 text-gray-200 hover:bg-primary-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-800"
+                                aria-controls="mobile-menu" 
+                                :aria-expanded="sidebarOpen">
+                            <span class="sr-only">Open main menu</span>
+                            <svg class="h-6 w-6" :class="{'hidden': sidebarOpen, 'block': !sidebarOpen}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                            </svg>
+                            <svg class="h-6 w-6" :class="{'block': sidebarOpen, 'hidden': !sidebarOpen}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile menu -->
+            <div class="md:hidden" id="mobile-menu" x-show="sidebarOpen" x-cloak>
+                <div class="space-y-1 px-2 pb-3 pt-2 sm:px-3">
+                    <a href="/" class="{% if request.url.path == '/' %}bg-primary-900 text-white{% else %}text-gray-300 hover:bg-primary-700 hover:text-white{% endif %} block rounded-md px-3 py-2 text-base font-medium">Dashboard</a>
+                    <a href="/public-bodies" class="{% if '/public-bodies' in request.url.path %}bg-primary-900 text-white{% else %}text-gray-300 hover:bg-primary-700 hover:text-white{% endif %} block rounded-md px-3 py-2 text-base font-medium">Public Bodies</a>
+                    <a href="/requests" class="{% if '/requests' in request.url.path %}bg-primary-900 text-white{% else %}text-gray-300 hover:bg-primary-700 hover:text-white{% endif %} block rounded-md px-3 py-2 text-base font-medium">ATI Requests</a>
+                    <a href="/compare" class="{% if '/compare' in request.url.path %}bg-primary-900 text-white{% else %}text-gray-300 hover:bg-primary-700 hover:text-white{% endif %} block rounded-md px-3 py-2 text-base font-medium">Compare</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Page Header -->
+        {% block header %}
+        <header class="bg-white shadow">
+            <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                <h1 class="text-3xl font-bold tracking-tight text-gray-900">{% block page_title %}Dashboard{% endblock %}</h1>
+            </div>
+        </header>
+        {% endblock %}
+
+        <!-- Main Content -->
+        <main id="main-content" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8" role="main">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-gray-200 mt-auto" role="contentinfo">
+            <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-500 text-sm">
+                        © 2024 ATI Stats. Access to Information Statistics Dashboard.
+                    </p>
+                    <nav class="mt-4 md:mt-0" aria-label="Footer navigation">
+                        <ul class="flex space-x-4 text-sm text-gray-500">
+                            <li><a href="/api/v1/docs" class="hover:text-primary-600" target="_blank" rel="noopener">API Docs</a></li>
+                            <li><a href="#" class="hover:text-primary-600">Help</a></li>
+                            <li><a href="#" class="hover:text-primary-600">Contact</a></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Loading indicator -->
+    <div class="htmx-indicator fixed top-4 right-4 bg-primary-600 text-white px-4 py-2 rounded-lg shadow-lg z-50" aria-live="polite">
+        <span class="animate-pulse">Loading...</span>
+    </div>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

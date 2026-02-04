@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}ATI Requests{% endblock %}
+{% block page_title %}ATI Requests{% endblock %}
+
+{% block content %}
+<div class="px-4 sm:px-0">
+    <!-- Search and Filter Section -->
+    <section class="mb-6" aria-labelledby="filter-heading">
+        <h2 id="filter-heading" class="sr-only">Search and Filter Requests</h2>
+        <div class="bg-white shadow rounded-lg p-4">
+            <form method="get" action="/requests" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Search -->
+                    <div>
+                        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                        <input type="text" 
+                               name="search" 
+                               id="search" 
+                               value="{{ search | default('') }}"
+                               placeholder="Request number or summary..."
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border">
+                    </div>
+
+                    <!-- Public Body Filter -->
+                    <div>
+                        <label for="public_body" class="block text-sm font-medium text-gray-700 mb-1">Public Body</label>
+                        <select name="public_body" 
+                                id="public_body" 
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border">
+                            <option value="">All Bodies</option>
+                            {% for pb in public_bodies %}
+                            <option value="{{ pb.id }}" {% if public_body == pb.id | string %}selected{% endif %}>{{ pb.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select name="status" 
+                                id="status" 
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border">
+                            <option value="">All Statuses</option>
+                            <option value="received" {% if status == 'received' %}selected{% endif %}>Received</option>
+                            <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="pending_clarification" {% if status == 'pending_clarification' %}selected{% endif %}>Pending Clarification</option>
+                            <option value="extended" {% if status == 'extended' %}selected{% endif %}>Extended</option>
+                            <option value="completed" {% if status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="abandoned" {% if status == 'abandoned' %}selected{% endif %}>Abandoned</option>
+                            <option value="transferred" {% if status == 'transferred' %}selected{% endif %}>Transferred</option>
+                        </select>
+                    </div>
+
+                    <!-- Outcome Filter -->
+                    <div>
+                        <label for="outcome" class="block text-sm font-medium text-gray-700 mb-1">Outcome</label>
+                        <select name="outcome" 
+                                id="outcome" 
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border">
+                            <option value="">All Outcomes</option>
+                            <option value="full_disclosure" {% if outcome == 'full_disclosure' %}selected{% endif %}>Full Disclosure</option>
+                            <option value="partial_disclosure" {% if outcome == 'partial_disclosure' %}selected{% endif %}>Partial Disclosure</option>
+                            <option value="no_disclosure" {% if outcome == 'no_disclosure' %}selected{% endif %}>No Disclosure</option>
+                            <option value="no_records_exist" {% if outcome == 'no_records_exist' %}selected{% endif %}>No Records Exist</option>
+                            <option value="transferred" {% if outcome == 'transferred' %}selected{% endif %}>Transferred</option>
+                            <option value="abandoned" {% if outcome == 'abandoned' %}selected{% endif %}>Abandoned</option>
+                            <option value="withdrawn" {% if outcome == 'withdrawn' %}selected{% endif %}>Withdrawn</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Date From -->
+                    <div>
+                        <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">Date From</label>
+                        <input type="date" 
+                               name="date_from" 
+                               id="date_from" 
+                               value="{{ date_from | default('') }}"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border">
+                    </div>
+
+                    <!-- Date To -->
+                    <div>
+                        <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">Date To</label>
+                        <input type="date" 
+                               name="date_to" 
+                               id="date_to" 
+                               value="{{ date_to | default('') }}"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm px-3 py-2 border">
+                    </div>
+
+                    <!-- Overdue Only -->
+                    <div class="flex items-end">
+                        <label class="flex items-center">
+                            <input type="checkbox" 
+                                   name="overdue" 
+                                   value="true" 
+                                   {% if overdue %}checked{% endif %}
+                                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                            <span class="ml-2 text-sm text-gray-700">Overdue Only</span>
+                        </label>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="flex items-end gap-2">
+                        <button type="submit" 
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            <svg class="-ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                            Filter
+                        </button>
+                        <a href="/requests" 
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Results Summary -->
+    <div class="mb-4 flex justify-between items-center">
+        <p class="text-sm text-gray-600">
+            Showing <span class="font-medium">{{ requests | length }}</span> of <span class="font-medium">{{ total_count }}</span> requests
+        </p>
+    </div>
+
+    <!-- Requests Table -->
+    <section aria-labelledby="requests-heading">
+        <h2 id="requests-heading" class="sr-only">ATI Requests List</h2>
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request #</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Public Body</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Outcome</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for req in requests %}
+                        <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='/requests/{{ req.id }}'">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <a href="/requests/{{ req.id }}" class="text-primary-600 hover:text-primary-800 font-medium">{{ req.request_number }}</a>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {% if req.public_body %}
+                                <a href="/public-bodies/{{ req.public_body.id }}" class="hover:text-primary-600">{{ req.public_body.name }}</a>
+                                {% else %}
+                                <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ req.submission_date.strftime('%Y-%m-%d') if req.submission_date else '-' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm {% if req.is_overdue %}text-red-600 font-medium{% else %}text-gray-500{% endif %}">
+                                {{ req.due_date.strftime('%Y-%m-%d') if req.due_date else '-' }}
+                                {% if req.is_overdue %}
+                                <span class="ml-1 text-xs">(Overdue)</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if req.status.value == 'completed' %}bg-green-100 text-green-800
+                                    {% elif req.status.value == 'in_progress' %}bg-blue-100 text-blue-800
+                                    {% elif req.status.value == 'extended' %}bg-purple-100 text-purple-800
+                                    {% elif req.status.value == 'pending_clarification' %}bg-yellow-100 text-yellow-800
+                                    {% elif req.is_deemed_refusal %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ req.status.value | replace('_', ' ') | title }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ req.outcome.value | replace('_', ' ') | title if req.outcome else '-' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ req.request_type.value | replace('_', ' ') | title if req.request_type else '-' }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                </svg>
+                                <h3 class="mt-2 text-sm font-medium text-gray-900">No requests found</h3>
+                                <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <nav class="mt-6 flex items-center justify-between" aria-label="Pagination">
+        <div class="hidden sm:block">
+            <p class="text-sm text-gray-700">
+                Page <span class="font-medium">{{ current_page }}</span> of <span class="font-medium">{{ total_pages }}</span>
+            </p>
+        </div>
+        <div class="flex-1 flex justify-between sm:justify-end gap-2">
+            {% if current_page > 1 %}
+            <a href="?page={{ current_page - 1 }}&search={{ search | default('') }}&status={{ status | default('') }}&outcome={{ outcome | default('') }}&public_body={{ public_body | default('') }}&date_from={{ date_from | default('') }}&date_to={{ date_to | default('') }}&overdue={{ 'true' if overdue else '' }}" 
+               class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                Previous
+            </a>
+            {% endif %}
+            {% if current_page < total_pages %}
+            <a href="?page={{ current_page + 1 }}&search={{ search | default('') }}&status={{ status | default('') }}&outcome={{ outcome | default('') }}&public_body={{ public_body | default('') }}&date_from={{ date_from | default('') }}&date_to={{ date_to | default('') }}&overdue={{ 'true' if overdue else '' }}" 
+               class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                Next
+            </a>
+            {% endif %}
+        </div>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
